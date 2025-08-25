@@ -1,4 +1,4 @@
-from supabase import create_client, Client
+from supabase.client import create_client, Client
 SUPABASE_URL="https://tdwohwhqhphcqwasrwez.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkd29od2hxaHBoY3F3YXNyd2V6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEwNzczNSwiZXhwIjoyMDcxNjgzNzM1fQ.5z6zaDJ0cIPcyofkY6BroLbvHv8vELq4nHtlg8yOVSI"
 
