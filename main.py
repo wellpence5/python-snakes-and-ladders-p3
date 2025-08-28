@@ -16,7 +16,6 @@ from cli_interface import (
 )
 from turn_manager import game_loop
 
-
 def main():
     #this is the entry point of the game.
     init_db() #make sure database actually still works
@@ -28,19 +27,16 @@ def main():
             choice = choose_resume_or_new()
             if choice == "1":
                 # Resume the saved game
-                print("Resuming saved game ^B^...")
+                print("Resuming saved game :D...")
                 players = load_players_for_game(active_game["id"])
                 game_loop(players, active_game["id"])
                 continue  #after game ends, go back to menu
-
             elif choice == "2":
                 #delete the old game and start fresh
                 delete_game(active_game["id"])
                 print("Old game gone to make room. Gonna add more saves next update")
-
         #show the main menu(only if no active game or it was deleted)
         choice = main_menu()
-
         if choice == "1":
             #starting a New Game
             try:
@@ -48,23 +44,17 @@ def main():
             except ValueError:
                 print("Try putting a number instead.")
                 continue
-
             #getting names
             names = get_player_names(num_players)
-
             #put each player to the database
             players = [add_player(name) for name in names]
-
             #create a new game record in the database
             game = create_game()
-
             #start the actual gameplay loop
             game_loop(players, game["id"])
-
         elif choice == "2":
             #view Leaderboard
             show_leaderboard()
-
         elif choice == "3":
             print("Goodbye! Give us a five star rating on play store for good luck :P")
             break
