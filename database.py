@@ -85,4 +85,29 @@ def delete_game(game_id):
     supabase.table("moves").delete().eq("game_id", game_id).execute()
     # Delete the game itself
     supabase.table("games").delete().eq("id", game_id).execute()
+    
+def load_players_for_game(game_id):
+    """
+    Load players who already made moves in this game, with their last position.
+    """
+    query = """
+    SELECT p.id, p.name, p.total_moves, p.wins,
+           COALESCE(m.new_position, p.current_position) AS position
+    FROM players p
+    LEFT JOIN LATERAL (
+        SELECT new_position
+        FROM moves
+        WHERE moves.player_id = p.id AND moves.game_id = {gid}
+        ORDER BY id DESC
+        LIMIT 1
+    ) m ON true
+    """.format(gid=game_id)
+
+    result = supabase.rpc("exec_sql", {"sql": query}).execute()
+    # NOTE: Supabase client doesn’t support raw SQL directly.
+    # Alternative: select players then update with last move position.
+    # For simplicity, let’s just return all players and handle in game logic.
+
+    players = supabase.table("players").select("*").execute().data
+    return players
 

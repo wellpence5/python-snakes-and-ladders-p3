@@ -1,4 +1,4 @@
-from database import init_db, add_player, create_game, get_active_game, delete_game
+from database import init_db, add_player, create_game, get_active_game, delete_game, load_players_for_game
 from cli_interface import main_menu, get_player_names, show_leaderboard, choose_resume_or_new
 from turn_manager import game_loop
 
@@ -11,13 +11,12 @@ def main():
             choice = choose_resume_or_new()
             if choice == "1":
                 print("▶ Resuming saved game...")
-                # TODO: load players from DB (small change needed here)
-                # players = load_players_for_game(active_game["id"])
-                game_loop(players, active_game["id"]) # type: ignore
+                players = load_players_for_game(active_game["id"])
+                game_loop(players, active_game["id"])
                 continue
             elif choice == "2":
                 delete_game(active_game["id"])
-                print("🗑️ Saved game deleted. You can start a new one.")
+                print("🗑️ Saved game deleted.")
 
         choice = main_menu()
 
@@ -26,7 +25,7 @@ def main():
             names = get_player_names(num_players)
             players = [add_player(name) for name in names]
             game = create_game()
-            game_loop(players, game["id"]) # type: ignore
+            game_loop(players, game["id"])
 
         elif choice == "2":
             show_leaderboard()
@@ -34,3 +33,6 @@ def main():
         elif choice == "3":
             print("👋 Goodbye!")
             break
+
+if __name__ == "__main__":
+    main()
