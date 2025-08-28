@@ -3,12 +3,14 @@ from datetime import datetime
 SUPABASE_URL="https://tdwohwhqhphcqwasrwez.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkd29od2hxaHBoY3F3YXNyd2V6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEwNzczNSwiZXhwIjoyMDcxNjgzNzM1fQ.5z6zaDJ0cIPcyofkY6BroLbvHv8vELq4nHtlg8yOVSI"
 
-# Create a Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# --- Database Setup ---
 def init_db():
-    print("✅ Database ready (check Supabase).")
+    print("✅ Database is ready (check Supabase).")
 
+
+# --- Players ---
 def add_player(name: str):
     """
     Add a new player to the database.
@@ -17,17 +19,27 @@ def add_player(name: str):
     result = supabase.table("players").insert({"name": name}).execute()
     return result.data[0] if result.data else None
 
+
 def update_player_position(player_id: int, new_position: int):
     """
-    Update a player's position in the database.
+    Update a player's position AND increase their total moves.
     """
-    supabase.table("players").update(
-        {"current_position": new_position}
-    ).eq("id", player_id).execute()
+    # First get current total_moves
+    player = supabase.table("players").select("total_moves").eq("id", player_id).execute()
+    total_moves = player.data[0]["total_moves"] if player.data else 0
 
+    # Then update both position and total_moves
+    supabase.table("players").update({
+        "current_position": new_position,
+        "total_moves": total_moves + 1
+    }).eq("id", player_id).execute()
+
+
+# --- Moves ---
 def log_move(game_id: int, player_id: int, roll: int, old_pos: int, new_pos: int):
     """
-    Record one move in the database.
+    Record one move in the moves table.
+    Each move is tied to a game and a player.
     """
     supabase.table("moves").insert({
         "game_id": game_id,
@@ -38,6 +50,8 @@ def log_move(game_id: int, player_id: int, roll: int, old_pos: int, new_pos: int
         "timestamp": datetime.now().isoformat()
     }).execute()
 
+
+# --- Games ---
 def create_game():
     """
     Start a new game in the database.
@@ -47,10 +61,13 @@ def create_game():
     }).execute()
     return result.data[0] if result.data else None
 
+
 def record_game_result(game_id: int, winner_id: int):
     """
-    Mark the game as finished and store the winner.
+    Mark the game as finished, set the winner, and
+    increase the winner’s total wins.
     """
+    # Mark the game as ended
     supabase.table("games").update({
         "end_time": datetime.now().isoformat(),
         "winner_id": winner_id
@@ -62,52 +79,70 @@ def record_game_result(game_id: int, winner_id: int):
         current_wins = player.data[0]["wins"] or 0
         supabase.table("players").update({"wins": current_wins + 1}).eq("id", winner_id).execute()
 
-def get_leaderboard():
-    """
-    Get the top 10 players ordered by wins.
-    """
-    result = supabase.table("players").select("*").order("wins", desc=True).limit(10).execute()
-    return result.data
 
 def get_active_game():
     """
-    Get the most recent unfinished game (end_time IS NULL).
+    Return the most recent unfinished game (where end_time is still NULL).
     """
-    result = supabase.table("games").select("*").is_("end_time", None).order("start_time", desc=True).limit(1).execute()
+    result = supabase.table("games").select("*")\
+        .is_("end_time", "null")\
+        .order("start_time", desc=True)\
+        .limit(1)\
+        .execute()
     return result.data[0] if result.data else None
 
-def delete_game(game_id):
+
+def delete_game(game_id: int):
     """
-    Delete a game and its moves.
-    Players stay in the database unless you delete them separately.
+    Delete a game and all of its moves.
+    (Players stay in the database.)
     """
-    # Delete moves first
     supabase.table("moves").delete().eq("game_id", game_id).execute()
-    # Delete the game itself
     supabase.table("games").delete().eq("id", game_id).execute()
-    
-def load_players_for_game(game_id):
-    """
-    Load players who already made moves in this game, with their last position.
-    """
-    query = """
-    SELECT p.id, p.name, p.total_moves, p.wins,
-           COALESCE(m.new_position, p.current_position) AS position
-    FROM players p
-    LEFT JOIN LATERAL (
-        SELECT new_position
-        FROM moves
-        WHERE moves.player_id = p.id AND moves.game_id = {gid}
-        ORDER BY id DESC
-        LIMIT 1
-    ) m ON true
-    """.format(gid=game_id)
 
-    result = supabase.rpc("exec_sql", {"sql": query}).execute()
-    # NOTE: Supabase client doesn’t support raw SQL directly.
-    # Alternative: select players then update with last move position.
-    # For simplicity, let’s just return all players and handle in game logic.
 
-    players = supabase.table("players").select("*").execute().data
+def reset_all():
+    """
+    Reset the entire database:
+    - Deletes all games and moves
+    - Resets all player stats (position, moves, wins)
+    """
+    supabase.table("moves").delete().neq("id", 0).execute()
+    supabase.table("games").delete().neq("id", 0).execute()
+    supabase.table("players").update({
+        "current_position": 0,
+        "total_moves": 0,
+        "wins": 0
+    }).neq("id", 0).execute()
+
+
+# --- Stats ---
+def get_leaderboard():
+    """
+    Get the top 10 players ordered by most wins.
+    """
+    result = supabase.table("players").select("*")\
+        .order("wins", desc=True)\
+        .limit(10)\
+        .execute()
+    return result.data
+
+
+def load_players_for_game(game_id: int):
+    """
+    Load players for a game, including their last known position.
+    (Instead of raw SQL, we query Supabase step by step.)
+    """
+    players = supabase.table("players").select("*").execute().data or []
+
+    for p in players:
+        # Get the last move this player made in this game
+        moves = supabase.table("moves").select("new_position")\
+            .eq("player_id", p["id"]).eq("game_id", game_id)\
+            .order("id", desc=True).limit(1).execute()
+
+        if moves.data:
+            p["current_position"] = moves.data[0]["new_position"]
+
     return players
 
