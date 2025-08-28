@@ -11,13 +11,19 @@ def init_db():
 
 
 # --- Players ---
-def add_player(name: str):
-    """
-    Add a new player to the database.
-    Returns the new player as a dictionary.
-    """
+def add_player(name):
+    """Add player if not already in database, otherwise return existing player."""
+    # Try to fetch the player first
+    result = supabase.table("players").select("*").eq("name", name).execute()
+
+    if result.data:
+        # Player already exists, return it
+        return result.data[0]
+
+    # Otherwise, insert new player
     result = supabase.table("players").insert({"name": name}).execute()
-    return result.data[0] if result.data else None
+    return result.data[0]
+
 
 
 def update_player_position(player_id: int, new_position: int):
