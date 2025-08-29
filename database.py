@@ -5,9 +5,10 @@ SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-#database Setup
+#database check to see if its connected.(Not really as necessary but there for dramatic effect)
 def init_db():
-    print("Database ready. Powered by Supabase (Loading...).")
+    print("Database ready. Powered by Supabase (Loading...)..")
+    print("----------------------------------------------------------------------")
 
 #players
 def add_player(name):
@@ -97,7 +98,6 @@ def get_leaderboard():
         .limit(10)\
         .execute()
     return result.data
-
 
 def load_players_for_game(game_id: int):
     players = supabase.table("players").select("*").execute().data or []

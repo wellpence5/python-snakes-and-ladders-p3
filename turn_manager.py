@@ -23,6 +23,6 @@ def game_loop(players, game_id): #main game loop:
             input(f"{player['name']}, press Enter to roll...")
             won = play_turn(player, game_id)
             if won:
-                print(f" {player['name']} WINS the game! 🏆")
+                print(f" {player['name']} WINS the game!")
                 record_game_result(game_id, player["id"])#save winner to database
                 return  # End the game

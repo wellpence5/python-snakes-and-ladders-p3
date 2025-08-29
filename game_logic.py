@@ -11,22 +11,13 @@ SNAKES_LADDERS = {
 }
 
 def roll_dice():
-    """Return a random number between 1 and 6."""
     return random.randint(1, 6)
 
 def move_player(position, roll):
-    """
-    Move player forward by dice roll.
-    Apply snake or ladder if landed on one.
-    Must land exactly on 100 to win.
-    """
     new_position = position + roll
-
-    # If overshoots 100, stay in the same place
+    #If overshoots 100, stay in the same place
     if new_position > 100:
         return position
-
-    # Check snakes or ladders
     if new_position in SNAKES_LADDERS:
         return SNAKES_LADDERS[new_position]
 
