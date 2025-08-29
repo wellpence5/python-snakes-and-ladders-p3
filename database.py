@@ -7,8 +7,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 #database Setup
 def init_db():
-    print("Database is ready (check Supabase).")
-
+    print("Database ready. Powered by Supabase (Loading...).")
 
 #players
 def add_player(name):
@@ -16,13 +15,9 @@ def add_player(name):
     #try to fetch the player first
     result = supabase.table("players").select("*").eq("name", name).execute()
     if result.data:
-        #player already exists,return it
-        return result.data[0]
-
-    #otherwise insert new player
-    result = supabase.table("players").insert({"name": name}).execute()
+        return result.data[0]#player already exists,return it
+    result = supabase.table("players").insert({"name": name}).execute()#otherwise insert new player
     return result.data[0]
-
 
 def update_player_position(player_id: int, new_position: int):
     #Update a player position and increase their total moves.
@@ -34,7 +29,6 @@ def update_player_position(player_id: int, new_position: int):
         "current_position": new_position,
         "total_moves": total_moves + 1
     }).eq("id", player_id).execute()
-
 
 #moves
 def log_move(game_id: int, player_id: int, roll: int, old_pos: int, new_pos: int):
@@ -49,7 +43,6 @@ def log_move(game_id: int, player_id: int, roll: int, old_pos: int, new_pos: int
         "timestamp": datetime.now().isoformat()
     }).execute()
 
-
 #games
 def create_game():
     #Start a new game in the database.
@@ -57,7 +50,6 @@ def create_game():
         "start_time": datetime.now().isoformat()
     }).execute()
     return result.data[0] if result.data else None
-
 
 def record_game_result(game_id: int, winner_id: int):
     #Mark the game as finished, set the winner, and
@@ -67,16 +59,14 @@ def record_game_result(game_id: int, winner_id: int):
         "end_time": datetime.now().isoformat(),
         "winner_id": winner_id
     }).eq("id", game_id).execute()
-
     #increase the winner wins
     player = supabase.table("players").select("wins").eq("id", winner_id).execute()
     if player.data:
         current_wins = player.data[0]["wins"] or 0
         supabase.table("players").update({"wins": current_wins + 1}).eq("id", winner_id).execute()
 
-
 def get_active_game():
-    #Return the most recent unfinished game (where end_time is still NULL).
+    #Return the most recent unfinished game(where end_time is still NULL cause how else would we know its unfinished).
     result = supabase.table("games").select("*")\
         .is_("end_time", "null")\
         .order("start_time", desc=True)\
@@ -84,13 +74,11 @@ def get_active_game():
         .execute()
     return result.data[0] if result.data else None
 
-
 def delete_game(game_id: int):
     #Delete a game and all of its moves.
     #(Players stay in the database.)
     supabase.table("moves").delete().eq("game_id", game_id).execute()
     supabase.table("games").delete().eq("id", game_id).execute()
-
 
 def reset_all():
     #Reset the entire database:
@@ -101,7 +89,6 @@ def reset_all():
         "total_moves": 0,
         "wins": 0
     }).neq("id", 0).execute()
-
 
 #stats
 def get_leaderboard():
