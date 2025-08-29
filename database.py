@@ -20,50 +20,43 @@ def add_player(name):
     result = supabase.table("players").insert({"name": name}).execute()#otherwise insert new player
     return result.data[0]
 
-def update_player_position(player_id: int, new_position: int):
-    #Update a player position and increase their total moves.
-    # First get current total_moves
-    player = supabase.table("players").select("total_moves").eq("id", player_id).execute()
+def update_player_position(player_id: int, new_position: int):#Update a player position and increase their total moves.
+    player = supabase.table("players").select("total_moves").eq("id", player_id).execute()# First get current total_moves
     total_moves = player.data[0]["total_moves"] if player.data else 0
-    #update both position and total_moves
-    supabase.table("players").update({
+    supabase.table("players").update({  #update both position and total_moves
         "current_position": new_position,
         "total_moves": total_moves + 1
     }).eq("id", player_id).execute()
 
 #moves
 def log_move(game_id: int, player_id: int, roll: int, old_pos: int, new_pos: int):
-    #Record one move in the moves table.
-    #Each move is tied to a game and a player.
     supabase.table("moves").insert({
-        "game_id": game_id,
+        "game_id": game_id,#Record one move in the moves table.
         "player_id": player_id,
         "roll_value": roll,
         "old_position": old_pos,
-        "new_position": new_pos,
+        "new_position": new_pos,#Each move is tied to a game and a player.
         "timestamp": datetime.now().isoformat()
     }).execute()
 
 #games
-def create_game():
-    #Start a new game in the database.
+def create_game():#Start a new game in the database.
     result = supabase.table("games").insert({
         "start_time": datetime.now().isoformat()
     }).execute()
     return result.data[0] if result.data else None
 
 def record_game_result(game_id: int, winner_id: int):
-    #Mark the game as finished, set the winner, and
-    #increase the winner’s total wins.
-    # Mark the game as ended
+    
+    
+    
     supabase.table("games").update({
-        "end_time": datetime.now().isoformat(),
+        "end_time": datetime.now().isoformat(),#Mark the game as finished, set the winner, and mark the game as ended
         "winner_id": winner_id
     }).eq("id", game_id).execute()
-    #increase the winner wins
     player = supabase.table("players").select("wins").eq("id", winner_id).execute()
     if player.data:
-        current_wins = player.data[0]["wins"] or 0
+        current_wins = player.data[0]["wins"] or 0  #increase the winner’s total wins.
         supabase.table("players").update({"wins": current_wins + 1}).eq("id", winner_id).execute()
 
 def get_active_game():
@@ -81,15 +74,15 @@ def delete_game(game_id: int):
     supabase.table("moves").delete().eq("game_id", game_id).execute()
     supabase.table("games").delete().eq("id", game_id).execute()
 
-def reset_all():
-    #Reset the entire database:
-    supabase.table("moves").delete().neq("id", 0).execute()
-    supabase.table("games").delete().neq("id", 0).execute()
-    supabase.table("players").update({
-        "current_position": 0,
-        "total_moves": 0,
-        "wins": 0
-    }).neq("id", 0).execute()
+#def reset_all():
+    #reset the entire database:
+   # supabase.table("moves").delete().neq("id", 0).execute()
+   # supabase.table("games").delete().neq("id", 0).execute()
+   # supabase.table("players").update({
+   #     "current_position": 0,
+   #     "total_moves": 0,
+   #     "wins": 0
+   # }).neq("id", 0).execute()
 
 #stats
 def get_leaderboard():
