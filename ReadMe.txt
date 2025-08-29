@@ -1,4 +1,4 @@
-Snakes and Ladders CLI (with Supabase Database)
+##Snakes and Ladders CLI (with Supabase Database)##
 A command-line Snakes and Ladders game built with Python, backed by Supabase for persistent storage of players, moves, and game history.
 This project supports saving and resuming games, tracking leaderboards, and managing players.
 

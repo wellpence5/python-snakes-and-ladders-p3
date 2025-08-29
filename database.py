@@ -7,7 +7,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 #database check to see if its connected.(Not really as necessary but there for dramatic effect)
 def init_db():
-    print("Database ready. Powered by Supabase (Loading...)..")
+    print("Database ready. Powered by Supabase[Not sponsored] (Loading...)..")
     print("----------------------------------------------------------------------")
 
 #players
